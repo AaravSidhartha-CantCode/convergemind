@@ -141,6 +141,7 @@ label, .stSelectbox label, .stTextInput label {
   div[data-testid="stColumn"] { min-width: 100% !important; }
   .cm-head { flex-direction: column; gap: 12px; }
   .cm-stats { gap: 24px; }
+  .cm-rail { min-height: 160px; }
 }
 """
 
