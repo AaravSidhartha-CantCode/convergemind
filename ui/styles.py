@@ -107,6 +107,21 @@ div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:nth-of-type(2
 .cm-know-row small { color: var(--text-muted); }
 .cm-count { color: var(--signal-amber); font-variant-numeric: tabular-nums; }
 
+/* ---- memory guardian ------------------------------------------------ */
+.cm-guardian { border: 1px solid var(--rule); background: var(--ink-raised);
+  padding: 12px; margin-bottom: 16px; }
+.cm-health-row { display: flex; gap: 12px; margin: 4px 0 12px; }
+.cm-health-row span { font-family: var(--mono); color: var(--text-muted); font-size: 10px;
+  text-transform: uppercase; }
+.cm-health-row b { color: var(--text-primary); font-size: 13px; }
+.cm-claim, .cm-alert { font-family: var(--mono); font-size: 10px; line-height: 1.45;
+  border-left: 2px solid var(--rule); padding: 7px 8px; margin-top: 8px;
+  color: var(--text-primary); }
+.cm-claim small { display: block; color: var(--text-muted); margin-top: 3px; }
+.cm-claim.proposed { border-left-color: var(--signal-amber); }
+.cm-claim.quarantined { border-left-color: #F2756B; color: var(--text-muted); }
+.cm-alert { border-left-color: var(--signal-amber); background: var(--ink-base); }
+
 /* ---- widgets -------------------------------------------------------- */
 .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {
   background: var(--ink-base) !important; border: 1px solid var(--rule) !important;

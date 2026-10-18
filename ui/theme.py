@@ -25,10 +25,14 @@ NODE_FILL = {
     # (see graph_view) so they read as the things acting on the graph
     # rather than as another kind of remembered thing.
     "Agent": "#7D8B9E",
+    "MemoryClaim": "#5FD0BE",
+    "Evidence": "#6FA8FF",
+    "Decision": "#F2C14E",
+    "HandoffCapsule": "#C39BF0",
 }
 EDGE = "#54657F"
 
-ACTOR_LABELS = {"Agent"}
+ACTOR_LABELS = {"Agent", "Decision", "HandoffCapsule"}
 
 # Nodes that live in the shared cross-tenant graph get a stroke; the
 # customer's own nodes do not. That is the isolation tell, and it survives

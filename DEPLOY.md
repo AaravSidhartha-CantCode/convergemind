@@ -4,6 +4,8 @@ Roughly 10 to 15 minutes. Two accounts needed, both free tier: FalkorDB Cloud an
 
 The container runs both processes (uvicorn on loopback, Streamlit on the public port), so judges get one URL with no CORS setup.
 
+> **Demo security boundary:** the API has no authentication and accepts a caller-selected `customer_id`. Deploy only with the fabricated seed data; anyone with the public URL can inspect the demo tenants. FalkorDB graph keys isolate graph queries, but this demo does not authenticate users or authorize tenant access.
+
 ---
 
 ## 1. FalkorDB Cloud

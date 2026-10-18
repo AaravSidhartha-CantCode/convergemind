@@ -5,6 +5,11 @@ from pydantic import BaseModel
 
 from backend.agent import PERSONAS, run_agent_turn
 from backend.memory_tools import (
+    memory_health,
+    quarantine_memory_claim,
+    relate_claims,
+    verify_memory_claim,
+    write_memory_claim,
     find_similar_resolutions,
     graph_snapshot,
     handoff_session,
@@ -33,6 +38,28 @@ class MessageRequest(BaseModel):
     session_id: str
     agent_name: str
     message: str
+
+
+class MemoryClaimRequest(BaseModel):
+    customer_id: str
+    session_id: str
+    key: str
+    value: str
+    evidence_text: str
+    source_type: str = "external"
+    source_trust: float = 0.5
+    status: str = "proposed"
+
+
+class ClaimRelationRequest(BaseModel):
+    customer_id: str
+    other_claim_id: str
+    relation: str = "CONTRADICTS"
+
+
+class QuarantineRequest(BaseModel):
+    customer_id: str
+    reason: str
 
 
 @app.get("/health")
@@ -83,6 +110,54 @@ def timeline(customer_id: str):
 @app.get("/customer/{customer_id}/graph")
 def customer_graph(customer_id: str):
     return graph_snapshot(customer_id)
+
+
+@app.get("/customer/{customer_id}/memory-health")
+def customer_memory_health(customer_id: str):
+    """Memory Guardian view: trusted, disputed, and stale operational context."""
+    return memory_health(customer_id)
+
+
+@app.post("/memory/claim")
+def create_memory_claim(req: MemoryClaimRequest):
+    try:
+        return write_memory_claim(
+            req.customer_id,
+            req.session_id,
+            req.key,
+            req.value,
+            req.evidence_text,
+            req.source_type,
+            req.source_trust,
+            req.status,
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+
+@app.post("/memory/claim/{claim_id}/verify")
+def verify_claim(claim_id: str, customer_id: str):
+    try:
+        return verify_memory_claim(customer_id, claim_id)
+    except ValueError as exc:
+        raise HTTPException(404, str(exc))
+
+
+@app.post("/memory/claim/{claim_id}/relation")
+def relate_memory_claim(claim_id: str, req: ClaimRelationRequest):
+    try:
+        relate_claims(req.customer_id, claim_id, req.other_claim_id, req.relation)
+        return {"related": True, "relation": req.relation}
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+
+@app.post("/memory/claim/{claim_id}/quarantine")
+def quarantine_claim(claim_id: str, req: QuarantineRequest):
+    try:
+        return quarantine_memory_claim(req.customer_id, claim_id, req.reason)
+    except ValueError as exc:
+        raise HTTPException(404, str(exc))
 
 
 @app.get("/knowledge/issue-types")

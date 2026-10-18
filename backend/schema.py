@@ -10,6 +10,9 @@ CUSTOMER_INDEXES = [
     "CREATE INDEX FOR (s:Session) ON (s.id)",
     "CREATE INDEX FOR (f:Fact) ON (f.key)",
     "CREATE INDEX FOR (i:Issue) ON (i.id)",
+    "CREATE INDEX FOR (m:MemoryClaim) ON (m.id)",
+    "CREATE INDEX FOR (d:Decision) ON (d.id)",
+    "CREATE INDEX FOR (h:HandoffCapsule) ON (h.id)",
 ]
 
 SHARED_INDEXES = [

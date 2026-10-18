@@ -3,13 +3,16 @@
 ChatAgent and EmailAgent are separate invocations with separate context
 windows. They never pass each other a transcript, a summary, or a cache.
 Everything one knows about the other's work it learned by querying
-FalkorDB through the tools below.
+FalkorDB through the tools below. Only verified graph claims are placed in
+an agent's recall context; proposed, disputed, and quarantined memories are
+visible to the Memory Guardian but cannot direct an agent action.
 
-Security note on tenant isolation: the tool schemas handed to the model do
-NOT take a customer_id. The server binds it from the authenticated session
-instead (see `_dispatch_for`). If the model were allowed to name the
-customer, a hallucinated or prompt-injected id would read another tenant's
-memory, so that parameter never leaves the server's control.
+Tenant boundary note: the tool schemas handed to the model do NOT take a
+customer_id. The server binds it from the current request (see
+`_dispatch_for`), so the model cannot switch tenants through a tool call.
+The HTTP API is a synthetic-data demo and has no user authentication:
+external callers can choose a customer_id. Graph keys isolate database
+queries; they do not authorize callers to access a tenant.
 """
 
 import json
