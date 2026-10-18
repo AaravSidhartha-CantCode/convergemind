@@ -1,6 +1,6 @@
 # Deploying ConvergeMind
 
-Roughly 10 to 15 minutes. Two accounts needed, both free tier: FalkorDB Cloud and Railway.
+Use Railway for the public app. Attach either a Railway-hosted FalkorDB service or a FalkorDB Cloud instance.
 
 The container runs both processes (uvicorn on loopback, Streamlit on the public port), so judges get one URL with no CORS setup.
 
@@ -8,7 +8,7 @@ The container runs both processes (uvicorn on loopback, Streamlit on the public 
 
 ---
 
-## 1. FalkorDB Cloud
+## Option A: FalkorDB Cloud
 
 1. Sign up at <https://app.falkordb.cloud> and create a free instance.
 2. From the instance page, copy the **host**, **port** and **password**.
@@ -31,7 +31,7 @@ $env:FALKORDB_PASSWORD = "<password>"
 py -3 -c "from backend.db import get_shared_graph; print(get_shared_graph().query('RETURN 1').result_set)"
 ```
 
-## 2. Seed the cloud instance
+### Seed the Cloud instance
 
 Run once, against the cloud credentials, so judges land on populated graphs rather than an empty demo:
 
@@ -44,7 +44,16 @@ Expect `Seeded 4 synthetic customers`.
 
 If you used the PowerShell variables above, run `py -3 -m backend.seed_data` in the same terminal.
 
-## 3. Railway
+## Option B: FalkorDB as a private Railway service
+
+1. In the same Railway project, create a new service from the image `falkordb/falkordb:4.22.1`.
+2. Name it `falkordb`. Do not generate a public domain for it.
+3. In the ConvergeMind app service, set `FALKORDB_HOST=falkordb.railway.internal` and `FALKORDB_PORT=6379`. Leave `FALKORDB_PASSWORD` unset unless you explicitly configured one for the database service.
+4. Seed the graphs from a Railway shell for the **app** service with `python -m backend.seed_data`. Run it once after the database is reachable.
+
+This removes the need for a FalkorDB Cloud account and keeps the database on Railway's private network.
+
+## Deploy the app service to Railway
 
 ```bash
 npm i -g @railway/cli
@@ -53,12 +62,9 @@ railway init          # from the repo root
 railway up
 ```
 
-Then set the environment variables, either in the Railway dashboard or:
+Then set the environment variables. For Cloud, use the host, port, and password copied above. For the private Railway service, use the variables in Option B.
 
 ```bash
-railway variables set FALKORDB_HOST=<host>
-railway variables set FALKORDB_PORT=<port>
-railway variables set FALKORDB_PASSWORD=<password>
 railway variables set GROQ_API_KEY=<your groq key>
 railway variables set GROQ_MODEL=openai/gpt-oss-120b
 ```
@@ -67,17 +73,13 @@ Do **not** set `API_BASE_URL`; the Dockerfile already points it at the in-contai
 
 Generate a public domain under Settings, Networking, Generate Domain.
 
-## 4. Smoke test
+## Smoke test
 
-```bash
-curl https://<your-app>.up.railway.app/health
-```
+Open the public Railway domain in a browser. The public port serves Streamlit, while the FastAPI process intentionally listens only on the container loopback interface; `/health` on the public URL is therefore not an API health check.
 
-Expect a response with `"status":"ok"` and the three personas: `ChatAgent`, `EmailAgent`, and `MemoryGuardian`.
+Pick `cust_bob` and send ChatAgent *"I'm locked out of my account again."* A working deployment recalls the SMS limitation, finds the `password_reset` resolution, and writes the resulting resolution back to the graph. Also use **simulate verified change**, then ask MemoryGuardian to audit the tenant.
 
-Then open the domain in a browser, pick `cust_bob`, and send ChatAgent *"I'm locked out of my account again."* If it replies referencing the SMS limitation, the whole chain (Railway, FalkorDB Cloud, Groq) is live.
-
-## 5. Put the URL in the README
+## Put the URL in the README
 
 Replace the deployment line in `README.md` with the live domain before submitting, since the submission checklist asks for it explicitly.
 

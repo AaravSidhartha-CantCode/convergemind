@@ -10,6 +10,7 @@ from backend.memory_tools import (
     start_session,
 )
 import pytest
+from unittest.mock import patch
 
 
 def test_start_session_creates_customer_and_session(tenant):
@@ -126,3 +127,39 @@ def test_graph_snapshot_returns_nodes_and_edges(tenant):
     }
     plan_node = next(n for n in snapshot["nodes"] if n["label"] == "Fact")
     assert plan_node["caption"] == "plan: Pro"
+
+
+def test_claim_recall_projects_sort_field_after_aggregation():
+    """FalkorDB requires ORDER BY fields to be in an aggregate RETURN scope."""
+    queries = []
+
+    class Result:
+        def __init__(self, rows):
+            self.result_set = rows
+
+    class Graph:
+        def query(self, cypher, _params):
+            queries.append(cypher)
+            if "MemoryClaim" in cypher:
+                return Result(
+                    [["claim_1", "plan", "Pro", "verified", 1.0, "case", ["case record"], "2026-01-01"]]
+                )
+            return Result([])
+
+    with patch("backend.memory_tools.get_customer_graph", return_value=Graph()):
+        context = recall_customer_context("cust_test")
+
+    claim_query = next(query for query in queries if "MemoryClaim" in query)
+    assert "collect(DISTINCT e.text), m.created_at" in claim_query
+    assert "ORDER BY m.created_at DESC" in claim_query
+    assert context["claims"] == [
+        {
+            "id": "claim_1",
+            "key": "plan",
+            "value": "Pro",
+            "status": "verified",
+            "source_trust": 1.0,
+            "source_type": "case",
+            "evidence": ["case record"],
+        }
+    ]

@@ -174,7 +174,7 @@ def recall_customer_context(customer_id: str) -> dict:
         MATCH (c:Customer {id: $cid})-[:HAS_CLAIM]->(m:MemoryClaim {status: 'verified'})
         OPTIONAL MATCH (e:Evidence)-[:SUPPORTS]->(m)
         RETURN m.id, m.key, m.value, m.status, m.source_trust, m.source_type,
-               collect(DISTINCT e.text)
+               collect(DISTINCT e.text), m.created_at
         ORDER BY m.created_at DESC
         """,
         {"cid": customer_id},
