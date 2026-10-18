@@ -22,6 +22,15 @@ FALKORDB_HOST=<host> FALKORDB_PORT=<port> FALKORDB_PASSWORD=<password> \
 
 Expect `[[1]]`.
 
+On Windows PowerShell, set the same values for the current terminal like this:
+
+```powershell
+$env:FALKORDB_HOST = "<host>"
+$env:FALKORDB_PORT = "<port>"
+$env:FALKORDB_PASSWORD = "<password>"
+py -3 -c "from backend.db import get_shared_graph; print(get_shared_graph().query('RETURN 1').result_set)"
+```
+
 ## 2. Seed the cloud instance
 
 Run once, against the cloud credentials, so judges land on populated graphs rather than an empty demo:
@@ -32,6 +41,8 @@ FALKORDB_HOST=<host> FALKORDB_PORT=<port> FALKORDB_PASSWORD=<password> \
 ```
 
 Expect `Seeded 4 synthetic customers`.
+
+If you used the PowerShell variables above, run `py -3 -m backend.seed_data` in the same terminal.
 
 ## 3. Railway
 
