@@ -10,7 +10,7 @@ Built for [Graph Hacks](https://www.wemakedevs.org/hackathons/falkordb) — **Tr
 
 Every support team has the same failure: you explain your problem to a chat agent, get handed to email, and explain it again. The usual fix is to stuff a transcript into the next agent's context window, which does not scale past a few sessions and does nothing at all for the agent serving a *different* customer with the *same* problem.
 
-ConvergeMind puts the memory in a graph instead of in a context window. Two agents, `ChatAgent` and `EmailAgent`, run as separate invocations with separate, empty context windows. They pass each other no transcript. Everything one knows about the other's work it learned by traversing FalkorDB.
+ConvergeMind puts the memory in a graph instead of in a context window. `ChatAgent` and `EmailAgent` run as separate support invocations with separate, empty context windows. They pass each other no transcript. Everything one knows about the other's work it learned by traversing FalkorDB. A third, separate `MemoryGuardian` agent audits evidence and governs which memories can direct support actions.
 
 That alone is not enough for a real agent fleet: stale, contradictory, and malicious memories should not quietly become instructions. ConvergeMind treats remembered information as a governed **claim** with evidence, trust, status, and downstream dependencies. The Memory Guardian can quarantine an untrusted write, expose a conflict, and calculate the blast radius when newly verified evidence supersedes an old claim.
 
@@ -61,7 +61,7 @@ A memory claim moves through `proposed`, `verified`, `disputed`, `superseded`, o
 - **Conflict:** Contradictory claims remain explicit graph relationships instead of being silently overwritten.
 - **Blast radius:** When a verified claim supersedes an older one, every `Decision` or `HandoffCapsule` that depended on the stale claim is marked `needs_revalidation`.
 
-The UI's **Memory Guardian** rail demonstrates both cases: it can inject an untrusted recovery instruction and quarantine it, or introduce new verified carrier evidence that invalidates an earlier password-reset decision.
+The UI's **Memory Guardian** panel includes its own tool-calling agent. It can audit a tenant's claim health, verify evidence, quarantine an unsafe write, and express conflicts as graph relationships. The demo controls can inject an untrusted recovery instruction or introduce carrier evidence that invalidates an earlier password-reset decision.
 
 ### Graph separation is a keyspace, not a WHERE clause
 
@@ -124,7 +124,7 @@ streamlit run ui/streamlit_app.py                # terminal 2  -> :8501
 
 Then open <http://localhost:8501>, pick `cust_bob`, and tell `ChatAgent` *"I'm locked out of my account again."* It will recall that Bob cannot receive SMS codes abroad, look up how that was solved before, and send an email reset link instead. Hand off to `EmailAgent` and ask what happened: it reads the graph and tells you, having been given no transcript.
 
-For the full memory-immunity flow, use **simulate verified change** in the Memory Guardian rail, then verify the proposed claim. The previous `known_blocker` claim is superseded and every decision that depended on it is visibly flagged for revalidation.
+For the full memory-immunity flow, use **simulate verified change**, then ask `MemoryGuardian` to audit the tenant or use the **verify** action. The previous `known_blocker` claim is superseded and every decision that depended on it is visibly flagged for revalidation.
 
 Inspect the raw graph yourself at <http://localhost:3000> (FalkorDB Browser) and run Cypher against `customer:cust_bob` directly.
 
@@ -135,8 +135,8 @@ Inspect the raw graph yourself at <http://localhost:3000> (FalkorDB Browser) and
 | Graph database | **FalkorDB** | The memory. Multi-graph keying gives per-tenant isolation for free. |
 | Agent tier | Groq (`openai/gpt-oss-120b`) | Free tier, and the fastest inference available, which matters when a demo waits on it. Swap via `GROQ_MODEL`. |
 | API | FastAPI | Thin; every endpoint is a pass-through to a Cypher-backed tool. |
-| UI | Streamlit + vis-network | Three rails: two agents and the live graph. |
-| Tests | pytest + Playwright | 30 unit/integration tests, plus render verification at 390/768/1440px. |
+| UI | Streamlit + vis-network | Two support rails, a Memory Guardian audit panel, and live graph views. |
+| Tests | pytest + Playwright | Database-backed coverage plus a randomized, database-free memory-governance check. |
 
 ## Project layout
 
@@ -144,12 +144,12 @@ Inspect the raw graph yourself at <http://localhost:3000> (FalkorDB Browser) and
 backend/
   db.py            FalkorDB connection; the tenant-isolation boundary
   schema.py        Idempotent index setup
-  memory_tools.py  The five Cypher-backed agent tools  <-- the core
-  agent.py         ChatAgent / EmailAgent personas, bound tool dispatch
+  memory_tools.py  Cypher-backed memory and claim-governance tools  <-- the core
+  agent.py         ChatAgent / EmailAgent / MemoryGuardian personas, bound dispatch
   api.py           HTTP surface
   seed_data.py     Synthetic demo history
 ui/
-  streamlit_app.py Three-rail demo UI
+  streamlit_app.py Support rails, Guardian audit panel, and graph UI
   theme.py         Design tokens (the only place a hex literal lives)
   styles.py        Injected CSS
   graph_view.py    Force-directed graph render
@@ -161,6 +161,16 @@ scripts/
 ## Data
 
 All demo data is **synthetic and fabricated** (`backend/seed_data.py`), per the hackathon's data rules. No scraped, real, or login-protected data is used anywhere.
+
+## Submission links
+
+| Deliverable | Link / action |
+|---|---|
+| Public repository | [github.com/AaravSidhartha-CantCode/convergemind](https://github.com/AaravSidhartha-CantCode/convergemind) |
+| Live deployment | Add the Railway public URL after following [`DEPLOY.md`](DEPLOY.md). |
+| Demo video | Add an unlisted YouTube, Loom, or Drive share URL after following [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md). |
+
+See [`docs/SUBMISSION_PLACEHOLDERS.md`](docs/SUBMISSION_PLACEHOLDERS.md) for the exact values to paste into the hackathon form once the external services are ready.
 
 ## AI assistance disclosure
 

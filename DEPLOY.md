@@ -62,7 +62,7 @@ Generate a public domain under Settings, Networking, Generate Domain.
 curl https://<your-app>.up.railway.app/health
 ```
 
-Expect `{"status":"ok","personas":["ChatAgent","EmailAgent"]}`.
+Expect a response with `"status":"ok"` and the three personas: `ChatAgent`, `EmailAgent`, and `MemoryGuardian`.
 
 Then open the domain in a browser, pick `cust_bob`, and send ChatAgent *"I'm locked out of my account again."* If it replies referencing the SMS limitation, the whole chain (Railway, FalkorDB Cloud, Groq) is live.
 

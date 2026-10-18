@@ -405,15 +405,15 @@ def quarantine_memory_claim(customer_id: str, claim_id: str, reason: str) -> dic
     graph = get_customer_graph(customer_id)
     result = graph.query(
         """
-        MATCH (m:MemoryClaim {id: $mid})
+        MATCH (:Customer {id: $cid})-[:HAS_CLAIM]->(m:MemoryClaim {id: $mid})
         SET m.status = 'quarantined', m.quarantine_reason = $reason,
             m.quarantined_at = $ts
         RETURN m.id
         """,
-        {"mid": claim_id, "reason": reason, "ts": _now()},
+        {"cid": customer_id, "mid": claim_id, "reason": reason, "ts": _now()},
     ).result_set
     if not result:
-        raise ValueError(f"claim {claim_id} not found")
+        raise ValueError(f"claim {claim_id} not found for customer {customer_id}")
     return {"quarantined_claim": claim_id, "reason": reason}
 
 

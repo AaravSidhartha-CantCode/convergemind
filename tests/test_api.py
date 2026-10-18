@@ -10,7 +10,11 @@ client = TestClient(app)
 def test_health_lists_personas():
     response = client.get("/health")
     assert response.status_code == 200
-    assert set(response.json()["personas"]) == {"ChatAgent", "EmailAgent"}
+    assert set(response.json()["personas"]) == {
+        "ChatAgent",
+        "EmailAgent",
+        "MemoryGuardian",
+    }
 
 
 def test_start_session_then_timeline(tenant):
@@ -28,6 +32,21 @@ def test_start_session_then_timeline(tenant):
 def test_unknown_persona_is_rejected(tenant):
     response = client.post(
         "/session/start", json={"customer_id": tenant, "agent_name": "VoiceAgent"}
+    )
+    assert response.status_code == 400
+
+
+def test_guardian_cannot_be_used_as_a_support_handoff(tenant):
+    first = client.post(
+        "/session/start", json={"customer_id": tenant, "agent_name": "ChatAgent"}
+    ).json()["session_id"]
+    response = client.post(
+        "/session/handoff",
+        json={
+            "customer_id": tenant,
+            "from_session": first,
+            "to_agent": "MemoryGuardian",
+        },
     )
     assert response.status_code == 400
 

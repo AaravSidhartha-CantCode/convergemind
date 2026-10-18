@@ -20,6 +20,7 @@ from backend.memory_tools import (
 from backend.db import list_customer_graphs
 
 app = FastAPI(title="ConvergeMind", version="1.0.0")
+SUPPORT_AGENT_NAMES = {"ChatAgent", "EmailAgent"}
 
 
 class StartSessionRequest(BaseModel):
@@ -84,8 +85,8 @@ def session_start(req: StartSessionRequest):
 
 @app.post("/session/handoff")
 def session_handoff(req: HandoffRequest):
-    if req.to_agent not in PERSONAS:
-        raise HTTPException(400, f"unknown agent persona: {req.to_agent}")
+    if req.to_agent not in SUPPORT_AGENT_NAMES:
+        raise HTTPException(400, "handoffs are limited to ChatAgent and EmailAgent")
     try:
         session_id = handoff_session(req.customer_id, req.from_session, req.to_agent)
     except ValueError as exc:

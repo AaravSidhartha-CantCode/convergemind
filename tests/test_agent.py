@@ -6,7 +6,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from backend.agent import PERSONAS, TOOL_SCHEMAS, _dispatch_for, run_agent_turn
+from backend.agent import (
+    GUARDIAN_TOOL_SCHEMAS,
+    PERSONAS,
+    TOOL_SCHEMAS,
+    _dispatch_for,
+    run_agent_turn,
+)
 
 
 def _tool_call(name, arguments, call_id="call_1"):
@@ -28,15 +34,27 @@ def test_every_advertised_tool_has_an_implementation():
 
 def test_no_tool_schema_exposes_customer_id():
     """Tenant binding is server-side; the model must not be able to name a tenant."""
-    for schema in TOOL_SCHEMAS:
+    for schema in TOOL_SCHEMAS + GUARDIAN_TOOL_SCHEMAS:
         properties = schema["function"]["parameters"]["properties"]
         assert "customer_id" not in properties
         assert "session_id" not in properties
 
 
-def test_both_personas_mandate_recall_first():
-    for prompt in PERSONAS.values():
+def test_support_personas_mandate_recall_first():
+    for name in ("ChatAgent", "EmailAgent"):
+        prompt = PERSONAS[name]
         assert "recall_customer_context FIRST" in prompt
+
+
+def test_guardian_has_only_governance_tools():
+    assert "inspect_memory_health FIRST" in PERSONAS["MemoryGuardian"]
+    advertised = {schema["function"]["name"] for schema in GUARDIAN_TOOL_SCHEMAS}
+    assert advertised == {
+        "inspect_memory_health",
+        "verify_memory_claim",
+        "quarantine_memory_claim",
+        "relate_memory_claims",
+    }
 
 
 @patch("backend.agent._get_client")

@@ -1,4 +1,4 @@
-"""The two agent personas.
+"""The three agent personas.
 
 ChatAgent and EmailAgent are separate invocations with separate context
 windows. They never pass each other a transcript, a summary, or a cache.
@@ -24,8 +24,12 @@ from backend.memory_tools import (
     find_similar_resolutions,
     known_issue_types,
     log_resolution,
+    memory_health,
+    quarantine_memory_claim,
     recall_customer_context,
+    relate_claims,
     record_fact,
+    verify_memory_claim,
 )
 
 MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
@@ -64,11 +68,34 @@ Non-negotiable procedure:
 Be concise. Do not narrate your tool use to the customer.
 """.strip()
 
+_GUARDIAN_RULES = """
+You are MemoryGuardian, a governance agent for a customer-memory graph.
+You do not provide customer support or invent customer facts. Your job is to
+inspect evidence and keep unsafe or stale memories from directing the support
+agents.
+
+Non-negotiable procedure:
+1. Call inspect_memory_health FIRST. It lists claims, their evidence and
+   trust, and decisions or handoffs that need revalidation.
+2. Verify a proposed claim only when its evidence and source trust support
+   it. Explain the evidence you relied on and report the returned blast radius.
+3. Quarantine a claim when its source is untrusted, its evidence is missing,
+   or it could cause unsafe customer action. Give a concise reason.
+4. If two claims conflict, record an explicit CONTRADICTS or SUPERSEDES
+   relationship instead of silently choosing one.
+5. Never call support-agent tools and never say a claim is true unless it has
+   been verified in the graph.
+
+Write a short audit-style response that names the claim status and the next
+safe action.
+""".strip()
+
 PERSONAS = {
     "ChatAgent": _SHARED_RULES
     + "\n\nYou are on live chat. Write short, informal, fast replies. Two or three sentences at most.",
     "EmailAgent": _SHARED_RULES
     + "\n\nYou are writing an email reply. Use a brief greeting and a sign-off, and keep it under four sentences.",
+    "MemoryGuardian": _GUARDIAN_RULES,
 }
 
 TOOL_SCHEMAS = [
@@ -165,6 +192,60 @@ TOOL_SCHEMAS = [
     },
 ]
 
+GUARDIAN_TOOL_SCHEMAS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "inspect_memory_health",
+            "description": "List the current customer's claims, evidence, statuses, and stale downstream decisions. Call this first. Takes no arguments.",
+            "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "verify_memory_claim",
+            "description": "Verify one proposed claim after inspecting its evidence. Returns every affected decision and handoff capsule.",
+            "parameters": {
+                "type": "object",
+                "properties": {"claim_id": {"type": "string", "description": "ID of the claim to verify"}},
+                "required": ["claim_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "quarantine_memory_claim",
+            "description": "Quarantine an unsafe or unsupported claim so support agents and handoffs cannot use it.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "claim_id": {"type": "string", "description": "ID of the claim to quarantine"},
+                    "reason": {"type": "string", "description": "Short audit reason"},
+                },
+                "required": ["claim_id", "reason"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "relate_memory_claims",
+            "description": "Make a conflict or supersession relationship explicit between two claims after inspecting them.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "claim_id": {"type": "string", "description": "First claim ID"},
+                    "other_claim_id": {"type": "string", "description": "Second claim ID"},
+                    "relation": {"type": "string", "enum": ["CONTRADICTS", "SUPERSEDES"]},
+                },
+                "required": ["claim_id", "other_claim_id", "relation"],
+            },
+        },
+    },
+]
+
 
 def _dispatch_for(customer_id: str, session_id: str) -> dict:
     """Bind tools to this session's tenant. The model cannot override these."""
@@ -180,6 +261,16 @@ def _dispatch_for(customer_id: str, session_id: str) -> dict:
             issue_type
         ),
         "known_issue_types": lambda **_: known_issue_types(),
+        "inspect_memory_health": lambda **_: memory_health(customer_id),
+        "verify_memory_claim": lambda claim_id, **_: verify_memory_claim(
+            customer_id, claim_id
+        ),
+        "quarantine_memory_claim": lambda claim_id, reason, **_: quarantine_memory_claim(
+            customer_id, claim_id, reason
+        ),
+        "relate_memory_claims": lambda claim_id, other_claim_id, relation, **_: relate_claims(
+            customer_id, claim_id, other_claim_id, relation
+        ),
     }
 
 
@@ -195,6 +286,9 @@ def run_agent_turn(
         raise ValueError(f"unknown agent persona: {agent_name}")
 
     dispatch = _dispatch_for(customer_id, session_id)
+    tool_schemas = (
+        GUARDIAN_TOOL_SCHEMAS if agent_name == "MemoryGuardian" else TOOL_SCHEMAS
+    )
     messages = [
         {"role": "system", "content": PERSONAS[agent_name]},
         {"role": "user", "content": user_message},
@@ -205,7 +299,7 @@ def run_agent_turn(
         response = _get_client().chat.completions.create(
             model=MODEL,
             messages=messages,
-            tools=TOOL_SCHEMAS,
+            tools=tool_schemas,
             tool_choice="auto",
             max_tokens=900,
             temperature=0.3,

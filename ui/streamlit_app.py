@@ -4,6 +4,7 @@ Two agent rails that share nothing but a FalkorDB graph, and a canvas
 showing that graph change as they work.
 """
 
+import html
 import os
 import sys
 
@@ -147,15 +148,18 @@ def render_rail(column, agent: str) -> None:
             trace = ""
             if entry["trace"]:
                 calls = "<br>".join(
-                    f"<b>{call['tool']}</b>("
-                    + ", ".join(f"{k}={v!r}" for k, v in call["arguments"].items())
+                    f"<b>{html.escape(str(call['tool']))}</b>("
+                    + ", ".join(
+                        f"{html.escape(str(k))}={html.escape(repr(v))}"
+                        for k, v in call["arguments"].items()
+                    )
                     + ")"
                     for call in entry["trace"]
                 )
                 trace = f'<div class="cm-trace">{calls}</div>'
             rows.append(
-                f'<div class="cm-msg"><div class="cm-msg-meta">{entry["role"]}</div>'
-                f'<div class="cm-msg-body">{entry["body"]}</div>{trace}</div>'
+                f'<div class="cm-msg"><div class="cm-msg-meta">{html.escape(str(entry["role"]))}</div>'
+                f'<div class="cm-msg-body">{html.escape(str(entry["body"]))}</div>{trace}</div>'
             )
         body = "".join(rows) or (
             '<div class="cm-empty">no session yet. the graph is this agent\'s '
@@ -250,11 +254,30 @@ with right:
     if st.session_state.guardian_notice:
         st.info(st.session_state.guardian_notice)
 
+    guardian_history = st.session_state.messages.get(
+        (customer_id, "MemoryGuardian"), []
+    )
+    if guardian_history:
+        st.caption("MemoryGuardian audit conversation")
+        for entry in guardian_history[-4:]:
+            st.markdown(
+                f'<div class="cm-claim"><b>{html.escape(str(entry["role"]))}</b><br>'
+                f'{html.escape(str(entry["body"]))}</div>',
+                unsafe_allow_html=True,
+            )
+    with st.form("form_MemoryGuardian", clear_on_submit=True):
+        guardian_text = st.text_input(
+            "ask MemoryGuardian to audit this tenant", key="input_MemoryGuardian"
+        )
+        if st.form_submit_button("audit memory") and guardian_text:
+            send(customer_id, "MemoryGuardian", guardian_text)
+            st.rerun()
+
     proposed = [claim for claim in claims if claim["status"] == "proposed"]
     for claim in proposed:
         st.markdown(
-            f'<div class="cm-claim proposed"><b>{claim["key"]}</b><br>{claim["value"]}'
-            f'<small>trust {claim["source_trust"]:.0%} · {claim["source_type"]}</small></div>',
+            f'<div class="cm-claim proposed"><b>{html.escape(str(claim["key"]))}</b><br>{html.escape(str(claim["value"]))}'
+            f'<small>trust {claim["source_trust"]:.0%} · {html.escape(str(claim["source_type"]))}</small></div>',
             unsafe_allow_html=True,
         )
         verify_col, quarantine_col = st.columns(2)
@@ -277,13 +300,13 @@ with right:
 
     for decision in memory_health.get("needs_revalidation", {}).get("decisions", []):
         st.markdown(
-            f'<div class="cm-alert">REVALIDATE · {decision["text"]}</div>',
+            f'<div class="cm-alert">REVALIDATE · {html.escape(str(decision["text"]))}</div>',
             unsafe_allow_html=True,
         )
     for claim in [c for c in claims if c["status"] == "quarantined"][:2]:
         st.markdown(
-            f'<div class="cm-claim quarantined"><b>QUARANTINED · {claim["key"]}</b><br>'
-            f'{claim["value"]}</div>',
+            f'<div class="cm-claim quarantined"><b>QUARANTINED · {html.escape(str(claim["key"]))}</b><br>'
+            f'{html.escape(str(claim["value"]))}</div>',
             unsafe_allow_html=True,
         )
     st.markdown("</div>", unsafe_allow_html=True)
@@ -308,9 +331,9 @@ with right:
         ).get("resolutions", [])
         for resolution in resolutions[:2]:
             st.markdown(
-                f'<div class="cm-know-row"><span>{resolution["resolution_text"]}'
-                f'<br><small>{issue_type} &middot; learned while helping '
-                f'{resolution["learned_while_helping"]}</small></span>'
+                f'<div class="cm-know-row"><span>{html.escape(str(resolution["resolution_text"]))}'
+                f'<br><small>{html.escape(str(issue_type))} &middot; learned while helping '
+                f'{html.escape(str(resolution["learned_while_helping"]))}</small></span>'
                 f'<span class="cm-count">{resolution["reuse_count"]}&times;</span></div>',
                 unsafe_allow_html=True,
             )
