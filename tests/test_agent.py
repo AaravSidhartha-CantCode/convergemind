@@ -46,6 +46,11 @@ def test_support_personas_mandate_recall_first():
         assert "recall_customer_context FIRST" in prompt
 
 
+def test_support_personas_do_not_claim_external_actions():
+    for name in ("ChatAgent", "EmailAgent"):
+        assert "Never claim that you completed" in PERSONAS[name]
+
+
 def test_guardian_has_only_governance_tools():
     assert "inspect_memory_health FIRST" in PERSONAS["MemoryGuardian"]
     advertised = {schema["function"]["name"] for schema in GUARDIAN_TOOL_SCHEMAS}

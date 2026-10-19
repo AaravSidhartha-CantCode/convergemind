@@ -114,6 +114,9 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+st.caption(
+    "Demo mode: agents recommend and record actions; they do not send email or change customer accounts."
+)
 
 if st.session_state.api_error and not customers:
     st.error(

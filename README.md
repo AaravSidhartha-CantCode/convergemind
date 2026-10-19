@@ -122,7 +122,7 @@ uvicorn backend.api:app --reload --port 8000     # terminal 1
 streamlit run ui/streamlit_app.py                # terminal 2  -> :8501
 ```
 
-Then open <http://localhost:8501>, pick `cust_bob`, and tell `ChatAgent` *"I'm locked out of my account again."* It will recall that Bob cannot receive SMS codes abroad, look up how that was solved before, and send an email reset link instead. Hand off to `EmailAgent` and ask what happened: it reads the graph and tells you, having been given no transcript.
+Then open <http://localhost:8501>, pick `cust_bob`, and tell `ChatAgent` *"I'm locked out of my account again."* It will recall that Bob cannot receive SMS codes abroad and recommend an email reset link with identity verification. The demo records recommendations in FalkorDB; it does not send email or modify an account. Hand off to `EmailAgent` and ask what happened: it reads the graph and tells you, having been given no transcript.
 
 For the full memory-immunity flow, use **simulate verified change**, then ask `MemoryGuardian` to audit the tenant or use the **verify** action. The previous `known_blocker` claim is superseded and every decision that depended on it is visibly flagged for revalidation.
 

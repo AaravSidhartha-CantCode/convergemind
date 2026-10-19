@@ -30,7 +30,7 @@ SEED_CUSTOMERS = [
             "known_blocker": "cannot receive SMS codes abroad",
         },
         "issue_type": "password_reset",
-        "resolution": "Sent an email reset link instead of SMS, verified identity by security question.",
+        "resolution": "Recommended an email reset link instead of SMS, with identity verification by security question.",
     },
     {
         "id": "cust_carol",

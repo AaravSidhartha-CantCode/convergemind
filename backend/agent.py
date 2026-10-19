@@ -64,6 +64,9 @@ Non-negotiable procedure:
    preference, an account detail), call record_fact.
 5. When you resolve something, call log_resolution so every other agent
    inherits the fix.
+6. You can recommend a next step and record that recommendation, but you
+   cannot send email, reset an account, change a subscription, or perform any
+   other external action. Never claim that you completed one of those actions.
 
 Be concise. Do not narrate your tool use to the customer.
 """.strip()
@@ -138,7 +141,7 @@ TOOL_SCHEMAS = [
         "function": {
             "name": "log_resolution",
             "description": (
-                "Record how you resolved an issue. Writes the issue to this "
+                "Record the recommended resolution for an issue. Writes the issue to this "
                 "customer's history and the reusable fix to the shared "
                 "knowledge graph that every other agent reads."
             ),
@@ -151,7 +154,7 @@ TOOL_SCHEMAS = [
                     },
                     "resolution_text": {
                         "type": "string",
-                        "description": "One sentence describing what fixed it",
+                        "description": "One sentence describing the recommended fix, without claiming it was executed",
                     },
                 },
                 "required": ["issue_type", "resolution_text"],
