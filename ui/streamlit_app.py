@@ -200,6 +200,18 @@ def render_rail(column, agent: str) -> None:
         )
         st.markdown(f'<div class="cm-rail">{body}</div>', unsafe_allow_html=True)
 
+        if not history:
+            suggested_prompt = (
+                "I'm locked out of my account again. What should I do?"
+                if agent == "ChatAgent"
+                else "What do we know about this case, and what should happen next?"
+            )
+            if st.button(
+                "load suggested case question",
+                key=f"suggest_{agent}",
+                use_container_width=True,
+            ):
+                st.session_state[f"input_{agent}"] = suggested_prompt
         with st.form(f"form_{agent}", clear_on_submit=True):
             text = st.text_input(f"message {agent}", key=f"input_{agent}")
             if st.form_submit_button("send") and text:
@@ -207,11 +219,11 @@ def render_rail(column, agent: str) -> None:
                 st.rerun()
 
 
-left, middle, right = st.columns([3, 3, 5], gap="medium")
-render_rail(left, "ChatAgent")
-render_rail(middle, "EmailAgent")
+chat_column, email_column, safety_column = st.columns([4, 4, 4], gap="medium")
+render_rail(chat_column, "ChatAgent")
+render_rail(email_column, "EmailAgent")
 
-with middle:
+with email_column:
     chat_session = st.session_state.sessions.get((customer_id, "ChatAgent"))
     if chat_session and st.button("hand off chat to email", use_container_width=True):
         result = api_post(
@@ -228,9 +240,9 @@ with middle:
             st.rerun()
 
 
-# ---- graph canvas -------------------------------------------------------
+# ---- safety review ------------------------------------------------------
 
-with right:
+with safety_column:
     st.markdown('<div class="cm-guardian">', unsafe_allow_html=True)
     st.markdown(
         '<div class="cm-canvas-label">memory safety review</div>',
@@ -291,6 +303,7 @@ with right:
     if st.session_state.guardian_notice:
         st.info(st.session_state.guardian_notice)
 
+    proposed = [claim for claim in claims if claim["status"] == "proposed"]
     guardian_history = st.session_state.messages.get(
         (customer_id, "MemoryGuardian"), []
     )
@@ -302,6 +315,14 @@ with right:
                 f'{html.escape(str(entry["body"]))}</div>',
                 unsafe_allow_html=True,
             )
+    if proposed and st.button(
+        "load suggested evidence review",
+        key="suggest_guardian",
+        use_container_width=True,
+    ):
+        st.session_state["input_MemoryGuardian"] = (
+            "Audit the proposed claim and recommend the safe next action."
+        )
     with st.form("form_MemoryGuardian", clear_on_submit=True):
         guardian_text = st.text_input(
             "ask Memory Safety Review to audit this case", key="input_MemoryGuardian"
@@ -310,7 +331,6 @@ with right:
             send(customer_id, "MemoryGuardian", guardian_text)
             st.rerun()
 
-    proposed = [claim for claim in claims if claim["status"] == "proposed"]
     for claim in proposed:
         st.markdown(
             f'<div class="cm-claim proposed"><b>{html.escape(str(claim["key"]))}</b><br>{html.escape(str(claim["value"]))}'
@@ -348,8 +368,12 @@ with right:
         )
     st.markdown("</div>", unsafe_allow_html=True)
 
+# ---- evidence and reusable playbooks -----------------------------------
+
+evidence_column, playbooks_column = st.columns([7, 3], gap="medium")
+with evidence_column:
     st.markdown(
-        '<div class="cm-canvas-label">why this recommendation is trusted</div>',
+        '<div class="cm-section-head"><span>CASE EVIDENCE</span><strong>Why this recommendation is trusted</strong></div>',
         unsafe_allow_html=True,
     )
     snapshot = api_get(f"/customer/{customer_id}/graph")
@@ -361,9 +385,10 @@ with right:
         components.html(graph_view.render_html(snapshot), height=460)
         st.markdown(graph_view.legend_html(), unsafe_allow_html=True)
 
+with playbooks_column:
     st.markdown('<div class="cm-know">', unsafe_allow_html=True)
     st.markdown(
-        '<div class="cm-canvas-label">reusable support playbooks</div>',
+        '<div class="cm-section-head"><span>TEAM MEMORY</span><strong>Reusable support playbooks</strong></div>',
         unsafe_allow_html=True,
     )
     for issue_type in issue_types:

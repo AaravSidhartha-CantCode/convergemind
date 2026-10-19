@@ -66,6 +66,11 @@ _SHEET = """
   font-family: var(--mono); font-size: 10px; color: var(--text-muted); }
 .cm-steps b { color: var(--text-primary); }
 .cm-steps span::before { content: "→ "; color: var(--signal-amber); }
+.cm-section-head { display: flex; flex-direction: column; gap: 3px; border-top: 1px solid var(--rule);
+  padding-top: 16px; margin: 22px 24px 10px 0; }
+.cm-section-head span { font-family: var(--mono); color: var(--signal-amber); font-size: 9px;
+  font-weight: 700; letter-spacing: .08em; }
+.cm-section-head strong { font-family: var(--sans); color: var(--text-primary); font-size: 17px; }
 
 /* ---- panel labels --------------------------------------------------- */
 .cm-label { font-family: var(--mono); font-weight: 700; font-size: 12px;
@@ -80,7 +85,7 @@ _SHEET = """
 
 /* ---- conversation rails --------------------------------------------- */
 .cm-rail { background: var(--ink-raised); border: 1px solid var(--rule);
-  border-radius: 2px; padding: 16px; min-height: 420px; }
+  border-radius: 2px; padding: 16px; min-height: 350px; }
 .cm-msg { margin-bottom: 12px; padding-bottom: 12px;
   border-bottom: 1px solid var(--rule); }
 .cm-msg:last-child { border-bottom: none; }
@@ -170,6 +175,7 @@ label, .stSelectbox label, .stTextInput label {
   .cm-case { grid-template-columns: 1fr; }
   .cm-case > div { border-right: none; border-bottom: 1px solid var(--rule); }
   .cm-case > div:last-child { border-bottom: none; }
+  .cm-section-head { margin-right: 0; }
 }
 /* ---- mobile: single column, spine dropped rather than shrunk -------- */
 @media (max-width: 640px) {
