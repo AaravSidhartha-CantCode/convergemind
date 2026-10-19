@@ -1,9 +1,4 @@
-"""Force-directed render of one customer's memory graph.
-
-vis-network does the physics so this file stays small. Shared-graph labels
-get a light stroke, customer-owned nodes do not, which is the visual tell
-for the tenant boundary.
-"""
+"""Readable, customer-centered render of one customer's memory graph."""
 
 import json
 
@@ -25,22 +20,26 @@ _TEMPLATE = """
   const nodes = new vis.DataSet(__NODES__);
   const edges = new vis.DataSet(__EDGES__);
   new vis.Network(document.getElementById("net"), {nodes, edges}, {
-    physics: {
-      solver: "forceAtlas2Based",
-      forceAtlas2Based: { gravitationalConstant: -60, springLength: 90, springConstant: 0.05 },
-      stabilization: { iterations: 220 }
+    layout: {
+      hierarchical: {
+        enabled: true, direction: "LR", sortMethod: "directed",
+        levelSeparation: 145, nodeSpacing: 105, treeSpacing: 150,
+        blockShifting: true, edgeMinimization: true, parentCentralization: true
+      }
     },
-    interaction: { hover: true, zoomView: true, dragView: true, tooltipDelay: 120 },
+    physics: false,
+    interaction: { hover: true, zoomView: true, dragView: true, tooltipDelay: 120, navigationButtons: true },
     nodes: {
-      shape: "dot", size: 13, borderWidth: 0,
-      font: { color: "__MUTED__", size: 11, face: "Martian Mono, monospace",
-              strokeWidth: 0, vadjust: -2 }
+      shape: "box", margin: {top: 7, right: 9, bottom: 7, left: 9},
+      borderWidth: 1, borderRadius: 4,
+      font: { color: "__MUTED__", size: 10, face: "Martian Mono, monospace",
+              strokeWidth: 0, vadjust: 0 }
     },
     edges: {
       color: { color: "__EDGE__", highlight: "__AMBER__" },
-      width: 1, smooth: { type: "continuous" },
+      width: 1, smooth: false,
       font: { color: "__MUTED__", size: 8, face: "Martian Mono, monospace",
-              strokeWidth: 0, align: "middle" },
+              strokeWidth: 0, align: "horizontal" },
       arrows: { to: { enabled: true, scaleFactor: 0.4 } }
     }
   });
@@ -51,13 +50,24 @@ _TEMPLATE = """
 
 def render_html(snapshot: dict, height: int = 520) -> str:
     nodes = []
+    levels = {
+        "Customer": 0,
+        "Session": 1,
+        "Agent": 2,
+        "Fact": 2,
+        "Issue": 2,
+        "MemoryClaim": 2,
+        "Evidence": 3,
+        "Decision": 3,
+        "HandoffCapsule": 3,
+    }
     for node in snapshot["nodes"]:
         label = node["label"]
         is_shared = label in theme.SHARED_LABELS
         nodes.append(
             {
                 "id": node["id"],
-                "label": node["caption"],
+                "label": _wrap_caption(node["caption"]),
                 "title": f"{label}\n" + "\n".join(
                     f"{k}: {v}" for k, v in node["properties"].items()
                 ),
@@ -67,11 +77,18 @@ def render_html(snapshot: dict, height: int = 520) -> str:
                 },
                 "borderWidth": 1 if is_shared else 0,
                 "size": 20 if label == "Customer" else 13,
-                "shape": "square" if label in theme.ACTOR_LABELS else "dot",
+                "shape": "ellipse" if label == "Customer" else "box",
+                "level": levels.get(label, 3),
             }
         )
     edges = [
-        {"from": edge["source"], "to": edge["target"], "label": edge["type"]}
+        {
+            "from": edge["source"],
+            "to": edge["target"],
+            "label": edge["type"]
+            if edge["type"] in {"NEXT", "SUPERSEDES", "CONTRADICTS", "DEPENDS_ON"}
+            else "",
+        }
         for edge in snapshot["edges"]
     ]
 
@@ -84,6 +101,22 @@ def render_html(snapshot: dict, height: int = 520) -> str:
         .replace("__AMBER__", theme.SIGNAL_AMBER)
         .replace("__HEIGHT__", str(height))
     )
+
+
+def _wrap_caption(caption: str, width: int = 22) -> str:
+    """Keep graph labels readable instead of letting one fact dominate a row."""
+    words = caption.split()
+    lines, line = [], ""
+    for word in words:
+        candidate = f"{line} {word}".strip()
+        if line and len(candidate) > width:
+            lines.append(line)
+            line = word
+        else:
+            line = candidate
+    if line:
+        lines.append(line)
+    return "\n".join(lines[:3])
 
 
 def legend_html() -> str:

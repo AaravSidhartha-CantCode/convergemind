@@ -104,11 +104,11 @@ issue_types = (api_get("/knowledge/issue-types") or {}).get("issue_types", [])
 st.markdown(
     f"""
     <div class="cm-head">
-      <div class="cm-title">ConvergeMind<span>memory immunity for agent teams · FalkorDB</span></div>
+      <div class="cm-title">ConvergeMind<span>trusted continuity for customer support · FalkorDB</span></div>
       <div class="cm-stats">
-        <div class="cm-stat">tenant graphs<b>{len(customers)}</b></div>
-        <div class="cm-stat">issue types<b>{len(issue_types)}</b></div>
-        <div class="cm-stat">graph keys<b>{len(customers) + 1}</b></div>
+        <div class="cm-stat">customer memories<b>{len(customers)}</b></div>
+        <div class="cm-stat">reusable fixes<b>{len(issue_types)}</b></div>
+        <div class="cm-stat">isolated graphs<b>{len(customers) + 1}</b></div>
       </div>
     </div>
     """,
@@ -131,6 +131,30 @@ if not customers:
 
 customer_id = st.selectbox("customer", customers, index=0)
 memory_health = api_get(f"/customer/{customer_id}/memory-health") or {}
+customer_context = api_get(f"/customer/{customer_id}/timeline") or {}
+facts = {fact["key"]: fact["value"] for fact in customer_context.get("facts", [])}
+latest_issue = (customer_context.get("past_issues") or [{}])[-1]
+customer_name = facts.get("name", customer_id.replace("cust_", "").title())
+case_summary = latest_issue.get("resolved_with", "No prior support case has been recorded.")
+revalidation_count = len(memory_health.get("needs_revalidation", {}).get("decisions", []))
+
+st.markdown(
+    f"""
+    <section class="cm-case">
+      <div><p class="cm-eyebrow">ACTIVE CUSTOMER CASE</p><h2>{html.escape(str(customer_name))}</h2>
+      <p>{html.escape(str(facts.get("plan", "Unknown plan")))} plan · prefers {html.escape(str(facts.get("preferred_channel", "support")))}</p></div>
+      <div><p class="cm-eyebrow">KNOWN CONTEXT</p><strong>{html.escape(str(facts.get("known_blocker", "No known blocker")))}</strong>
+      <p>Retrieved from this customer's isolated FalkorDB graph.</p></div>
+      <div><p class="cm-eyebrow">LAST SAFE PLAYBOOK</p><strong>{html.escape(str(latest_issue.get("type", "No prior issue")))}</strong>
+      <p>{html.escape(str(case_summary))}</p></div>
+    </section>
+    """,
+    unsafe_allow_html=True,
+)
+st.markdown(
+    """<div class="cm-steps"><b>Try the customer journey</b><span>1. Ask Live Chat</span><span>2. Hand off to Email</span><span>3. Introduce new evidence</span><span>4. Let Memory Safety Review show what needs rechecking</span></div>""",
+    unsafe_allow_html=True,
+)
 
 
 # ---- rails --------------------------------------------------------------
@@ -139,9 +163,15 @@ memory_health = api_get(f"/customer/{customer_id}/memory-health") or {}
 def render_rail(column, agent: str) -> None:
     with column:
         active = st.session_state.active_agent == agent
+        role = "live chat" if agent == "ChatAgent" else "email follow-up"
+        explanation = (
+            "Starts with no chat history and reads the customer graph first."
+            if agent == "ChatAgent"
+            else "A separate agent reads the same graph after the channel switch."
+        )
         st.markdown(
             f'<div class="cm-label"><i class="cm-dot{"" if active else " idle"}"></i>'
-            f"{agent}</div>",
+            f"{role}</div><div class=\"cm-role-note\">{explanation}</div>",
             unsafe_allow_html=True,
         )
 
@@ -165,8 +195,8 @@ def render_rail(column, agent: str) -> None:
                 f'<div class="cm-msg-body">{html.escape(str(entry["body"]))}</div>{trace}</div>'
             )
         body = "".join(rows) or (
-            '<div class="cm-empty">no session yet. the graph is this agent\'s '
-            "only memory.</div>"
+            '<div class="cm-empty">Start the case here. This agent has no transcript; '
+            "its only context comes from FalkorDB.</div>"
         )
         st.markdown(f'<div class="cm-rail">{body}</div>', unsafe_allow_html=True)
 
@@ -203,7 +233,11 @@ with middle:
 with right:
     st.markdown('<div class="cm-guardian">', unsafe_allow_html=True)
     st.markdown(
-        '<div class="cm-canvas-label">memory guardian</div>',
+        '<div class="cm-canvas-label">memory safety review</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="cm-role-note">Before new information changes how support responds, check its evidence and every decision that depends on it.</div>',
         unsafe_allow_html=True,
     )
     claims = memory_health.get("claims", [])
@@ -218,7 +252,7 @@ with right:
         '</div>',
         unsafe_allow_html=True,
     )
-    if st.button("simulate untrusted memory", key="inject_poison", use_container_width=True):
+    if st.button("add untrusted note", key="inject_poison", use_container_width=True):
         guardian_session = session_for(customer_id, "ChatAgent")
         if guardian_session:
             result = api_post(
@@ -236,7 +270,7 @@ with right:
             if result:
                 st.session_state.guardian_notice = "Untrusted memory was quarantined before agents could use it."
                 st.rerun()
-    if st.button("simulate verified change", key="introduce_change", use_container_width=True):
+    if st.button("add verified carrier update", key="introduce_change", use_container_width=True):
         guardian_session = session_for(customer_id, "ChatAgent")
         if guardian_session:
             result = api_post(
@@ -270,7 +304,7 @@ with right:
             )
     with st.form("form_MemoryGuardian", clear_on_submit=True):
         guardian_text = st.text_input(
-            "ask MemoryGuardian to audit this tenant", key="input_MemoryGuardian"
+            "ask Memory Safety Review to audit this case", key="input_MemoryGuardian"
         )
         if st.form_submit_button("audit memory") and guardian_text:
             send(customer_id, "MemoryGuardian", guardian_text)
@@ -315,17 +349,21 @@ with right:
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown(
-        f'<div class="cm-canvas-label">{customer_id} memory graph</div>',
+        '<div class="cm-canvas-label">why this recommendation is trusted</div>',
         unsafe_allow_html=True,
     )
     snapshot = api_get(f"/customer/{customer_id}/graph")
     if snapshot:
-        components.html(graph_view.render_html(snapshot), height=530)
+        st.markdown(
+            '<div class="cm-graph-note">Customer context flows left to right into evidence and decisions. Only high-impact relationships are labeled; hover any node for detail.</div>',
+            unsafe_allow_html=True,
+        )
+        components.html(graph_view.render_html(snapshot), height=460)
         st.markdown(graph_view.legend_html(), unsafe_allow_html=True)
 
     st.markdown('<div class="cm-know">', unsafe_allow_html=True)
     st.markdown(
-        '<div class="cm-canvas-label">shared knowledge, all tenants</div>',
+        '<div class="cm-canvas-label">reusable support playbooks</div>',
         unsafe_allow_html=True,
     )
     for issue_type in issue_types:

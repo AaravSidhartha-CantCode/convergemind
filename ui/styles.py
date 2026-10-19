@@ -52,6 +52,21 @@ _SHEET = """
 .cm-stat b { display: block; font-size: 18px; color: var(--text-primary);
   font-weight: 500; font-variant-numeric: tabular-nums; }
 
+/* ---- active customer case ------------------------------------------ */
+.cm-case { display: grid; grid-template-columns: 1.1fr 1fr 1.4fr; gap: 0;
+  border: 1px solid var(--rule); background: var(--ink-raised); margin: 0 24px 12px 0; }
+.cm-case > div { padding: 14px 16px; border-right: 1px solid var(--rule); min-height: 82px; }
+.cm-case > div:last-child { border-right: none; }
+.cm-case h2 { font-family: var(--sans); font-size: 20px; margin: 3px 0; color: var(--text-primary); }
+.cm-case p { font-family: var(--sans); color: var(--text-muted); margin: 3px 0; font-size: 12px; line-height: 1.4; }
+.cm-case strong { font-family: var(--sans); color: var(--text-primary); font-size: 13px; line-height: 1.35; }
+.cm-eyebrow { font-family: var(--mono) !important; font-size: 9px !important; letter-spacing: .08em;
+  color: var(--signal-amber) !important; font-weight: 700; }
+.cm-steps { margin: 0 24px 22px 0; display: flex; flex-wrap: wrap; gap: 8px 20px;
+  font-family: var(--mono); font-size: 10px; color: var(--text-muted); }
+.cm-steps b { color: var(--text-primary); }
+.cm-steps span::before { content: "→ "; color: var(--signal-amber); }
+
 /* ---- panel labels --------------------------------------------------- */
 .cm-label { font-family: var(--mono); font-weight: 700; font-size: 12px;
   color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.08em;
@@ -59,6 +74,9 @@ _SHEET = """
 .cm-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--signal-amber);
   transition: opacity 120ms ease-out; }
 .cm-dot.idle { background: var(--rule); }
+.cm-role-note, .cm-graph-note { font-family: var(--sans); color: var(--text-muted); font-size: 12px;
+  line-height: 1.4; margin: -5px 0 12px; }
+.cm-graph-note { margin: -4px 0 8px; font-size: 11px; }
 
 /* ---- conversation rails --------------------------------------------- */
 .cm-rail { background: var(--ink-raised); border: 1px solid var(--rule);
@@ -149,6 +167,9 @@ label, .stSelectbox label, .stTextInput label {
   div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:nth-of-type(2)::before {
     display: none;
   }
+  .cm-case { grid-template-columns: 1fr; }
+  .cm-case > div { border-right: none; border-bottom: 1px solid var(--rule); }
+  .cm-case > div:last-child { border-bottom: none; }
 }
 /* ---- mobile: single column, spine dropped rather than shrunk -------- */
 @media (max-width: 640px) {

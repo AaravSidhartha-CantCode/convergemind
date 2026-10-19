@@ -14,6 +14,16 @@ ConvergeMind puts the memory in a graph instead of in a context window. `ChatAge
 
 That alone is not enough for a real agent fleet: stale, contradictory, and malicious memories should not quietly become instructions. ConvergeMind treats remembered information as a governed **claim** with evidence, trust, status, and downstream dependencies. The Memory Guardian can quarantine an untrusted write, expose a conflict, and calculate the blast radius when newly verified evidence supersedes an old claim.
 
+## What the product does for a support team
+
+A support lead opens one customer case and sees the context the team can safely use: the customer's known constraints, the prior support playbook, and any memory that needs review. The workflow is deliberately simple:
+
+1. **Continue the conversation.** Live Chat reads the customer graph before responding.
+2. **Change channels without repetition.** Email Follow-up starts separately and reads the same graph instead of receiving a transcript.
+3. **Challenge a memory before it changes a decision.** Memory Safety Review checks new evidence, quarantines unsafe notes, and highlights every past decision that needs revalidation.
+
+The graph is the evidence trail behind the case view. It shows why an agent can use a piece of context and what changes when that context is corrected.
+
 ## Remove FalkorDB and nothing works
 
 This is deliberate, and it is the test the hackathon rules actually set. There is no cache, no in-memory fallback, no secondary store. Every agent tool is a Cypher query:
