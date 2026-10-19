@@ -1,29 +1,28 @@
 # ConvergeMind demo recording (2–3 minutes)
 
-Use fabricated seed data only. The hosted/demo API has no authentication, so do not enter real customer information.
+Use fabricated seed data only. ConvergeMind demonstrates coordination for a housing-recovery team after a flood; it does not contact relief providers, send messages, decide eligibility, or provide emergency, legal, or medical advice.
 
 ## Before recording
 
 1. Start FalkorDB and the app using the README setup steps.
-2. Run `python -m backend.seed_data` and open the app at `http://localhost:8501`.
-3. Select `cust_bob`. Confirm the graph and seeded history are visible.
-4. Have the FalkorDB Browser at `http://localhost:3000` ready if you want a brief database view.
+2. Run `python -m scripts.reset_demo` and open the app at `http://localhost:8501`.
+3. Select `cust_maya`. Confirm Maya's case brief, graph, and prior temporary-housing playbook are visible.
 
 ## Run of show
 
-**0:00–0:20 — The problem.** Show the two separate support panels and the Memory Guardian panel. Say: “A chat support agent and an email support agent start with separate context windows. If the customer switches channels, the second agent needs memory without receiving the first agent’s transcript. A third agent governs whether that memory is safe to reuse.”
+**0:00–0:20 — The human problem.** Show Maya's case brief. Say: “After displacement, people often repeat safe contact details, document status, and accessibility needs every time a case changes hands. A forgotten detail can make a recommendation unsafe or force someone to start again.”
 
-**0:20–1:00 — Recall from graph memory.** In ChatAgent, send: `I'm locked out of my account again.` Point to the visible tool trace and changing customer graph. Explain that the agent recalls Bob’s prior SMS delivery issue and checks the shared procedural memory for a resolution.
+**0:20–0:55 — Intake remembers.** In **Intake Chat**, use the suggested question or send: `I lost my phone in the flood. What is the safe next step for my housing case?` Point to the tool trace. Explain that the agent starts with an empty context window, then reads Maya's isolated FalkorDB graph: her no-SMS constraint, step-free housing need, document status, and a prior temporary-housing playbook.
 
-**1:00–1:40 — Handoff.** Use **hand off chat to email**, then ask EmailAgent: `What did we learn about this lockout, and what should I do?` Show that EmailAgent reads the session/facts from FalkorDB and responds without a transcript being passed between agents.
+**0:55–1:20 — The handoff does not lose Maya's story.** Click **hand off chat to email**. In **Case Follow-up**, send: `What do we know about Maya's case, and what should a caseworker review next?` Explain that this is a separate agent session with no transcript; it reads the same graph.
 
-**1:40–2:10 — Govern a memory.** Click **simulate untrusted memory** and show that it is quarantined. Then click **simulate verified change**, ask MemoryGuardian to audit the tenant, and verify the proposed carrier update. Point out the affected decision marked **REVALIDATE**. Explain that the Guardian uses separate FalkorDB tools and cannot call customer-support tools.
+**1:20–1:55 — New information is governed.** Click **add verified carrier update**. The new contact claim is proposed rather than silently trusted. Use the suggested evidence-review prompt in **Memory Safety Review**, then verify the claim. Point to the earlier recommendations marked **REVALIDATE** and the graph edge showing the old contact constraint was superseded.
 
-**2:10–2:30 — Show the graph and close.** Point out the customer’s session/fact history and the separate shared resolution graph in the UI. If time permits, show the corresponding graph key in FalkorDB Browser. State that the demo uses synthetic data, FalkorDB stores the persistent graph memory, and the project is entered in Track 2: Agent Memory and Coordination. Describe tenant boundaries accurately: graph keys separate stored graphs and model tools are bound to the selected request, while the demo HTTP API does not implement user authentication.
+**1:55–2:15 — Close.** Say: “ConvergeMind gives housing-recovery teams persistent, shared, and governed case memory. FalkorDB stores the private case graph, reusable team playbooks, and the evidence path behind every recommendation.”
 
 ## Recording checklist
 
-- Keep the browser address bar and app name visible at the opening.
-- Make sure tool traces and graph changes are readable in the capture.
-- Avoid showing API keys, environment files, or account dashboards.
-- Rewatch the exported video and confirm its share link works in a signed-out/private browser before adding it to the submission.
+- Keep the case brief, tool traces, and Memory Safety Review visible.
+- Describe every person and case as synthetic.
+- Do not show deployment dashboards, API keys, or environment variables.
+- Describe the scope accurately: this is a coordination and recommendation demo, not a provider-messaging or eligibility system.

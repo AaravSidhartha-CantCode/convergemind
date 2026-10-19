@@ -8,19 +8,19 @@ Built for [Graph Hacks](https://www.wemakedevs.org/hackathons/falkordb) — **Tr
 
 ## The problem
 
-Every support team has the same failure: you explain your problem to a chat agent, get handed to email, and explain it again. The usual fix is to stuff a transcript into the next agent's context window, which does not scale past a few sessions and does nothing at all for the agent serving a *different* customer with the *same* problem.
+After a flood or displacement event, a household may have to repeat its safe-contact preference, document status, and accessibility needs at every handoff. The usual fix is to stuff a transcript into the next agent's context window. That fails when a new coordinator enters the case, the contact situation changes, or a recommendation depends on what several earlier interactions established.
 
 ConvergeMind puts the memory in a graph instead of in a context window. `ChatAgent` and `EmailAgent` run as separate support invocations with separate, empty context windows. They pass each other no transcript. Everything one knows about the other's work it learned by traversing FalkorDB. A third, separate `MemoryGuardian` agent audits evidence and governs which memories can direct support actions.
 
 That alone is not enough for a real agent fleet: stale, contradictory, and malicious memories should not quietly become instructions. ConvergeMind treats remembered information as a governed **claim** with evidence, trust, status, and downstream dependencies. The Memory Guardian can quarantine an untrusted write, expose a conflict, and calculate the blast radius when newly verified evidence supersedes an old claim.
 
-## What the product does for a support team
+## What the product does for a housing-recovery team
 
-A support lead opens one customer case and sees the context the team can safely use: the customer's known constraints, the prior support playbook, and any memory that needs review. The workflow is deliberately simple:
+A caseworker opens one assistance case and sees the context the team can safely use: safe-contact constraints, document status, accessibility needs, the prior recovery playbook, and any memory that needs review. The workflow is deliberately simple:
 
-1. **Continue the conversation.** Live Chat reads the customer graph before responding.
-2. **Change channels without repetition.** Email Follow-up starts separately and reads the same graph instead of receiving a transcript.
-3. **Challenge a memory before it changes a decision.** Memory Safety Review checks new evidence, quarantines unsafe notes, and highlights every past decision that needs revalidation.
+1. **Continue the intake.** Intake Chat reads the private case graph before responding.
+2. **Change channels without repetition.** Case Follow-up starts separately and reads the same graph instead of receiving a transcript.
+3. **Challenge a memory before it changes a recommendation.** Memory Safety Review checks new evidence, quarantines unsafe notes, and highlights every past recommendation that needs revalidation.
 
 The graph is the evidence trail behind the case view. It shows why an agent can use a piece of context and what changes when that context is corrected.
 
@@ -132,11 +132,11 @@ uvicorn backend.api:app --reload --port 8000     # terminal 1
 streamlit run ui/streamlit_app.py                # terminal 2  -> :8501
 ```
 
-Then open <http://localhost:8501>, pick `cust_bob`, and tell `ChatAgent` *"I'm locked out of my account again."* It will recall that Bob cannot receive SMS codes abroad and recommend an email reset link with identity verification. The demo records recommendations in FalkorDB; it does not send email or modify an account. Hand off to `EmailAgent` and ask what happened: it reads the graph and tells you, having been given no transcript.
+Then open <http://localhost:8501>, pick `cust_maya`, and tell `ChatAgent` *"I lost my phone in the flood. What is the safe next step for my housing case?"* It recalls Maya's no-SMS constraint, accessibility need, and prior temporary-housing playbook. The demo records recommendations in FalkorDB; it does not contact providers, send messages, or decide eligibility. Hand off to `EmailAgent` and ask what happened: it reads the graph without receiving a transcript.
 
-For the full memory-immunity flow, use **simulate verified change**, then ask `MemoryGuardian` to audit the tenant or use the **verify** action. The previous `known_blocker` claim is superseded and every decision that depended on it is visibly flagged for revalidation.
+For the full memory-immunity flow, use **add verified carrier update**, then ask `MemoryGuardian` to audit the case or use the **verify** action. The previous `known_blocker` claim is superseded and every decision that depended on it is visibly flagged for revalidation.
 
-Inspect the raw graph yourself at <http://localhost:3000> (FalkorDB Browser) and run Cypher against `customer:cust_bob` directly.
+Inspect the raw graph yourself at <http://localhost:3000> (FalkorDB Browser) and run Cypher against `customer:cust_maya` directly.
 
 ## Stack
 
