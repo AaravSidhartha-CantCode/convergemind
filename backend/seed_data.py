@@ -1,82 +1,64 @@
-"""Synthetic housing-recovery cases for the public demo.
+"""Synthetic support history for the public demo.
 
-These are invented examples. They make the coordination problem concrete
-without exposing any real applicant, caseworker, or relief-provider data.
+The app uses ordinary account-support cases as an example workload. The
+product itself is the governed memory layer beneath the agents, not a CRM.
 """
 
 from backend.memory_tools import log_resolution, record_fact, start_session
 
 SEED_CUSTOMERS = [
     {
-        "id": "cust_maya",
+        "id": "cust_alice",
         "history_agent": "EmailAgent",
         "facts": {
-            "name": "Maya Ortiz",
-            "assistance_path": "housing recovery",
-            "preferred_channel": "email — public library access",
-            "known_blocker": "Lost phone after flooding; do not use SMS",
-            "accessibility_need": "step-free temporary housing",
-            "document_status": "photo ID uploaded; lease copy pending",
+            "name": "Alice Nwosu",
+            "plan": "Pro",
+            "preferred_channel": "email",
+            "timezone": "Europe/London",
         },
-        "issue_type": "temporary_housing",
-        "resolution": (
-            "Recommended a step-free temporary-housing intake through the city "
-            "relief desk, with the document checklist confirmed by email."
-        ),
+        "issue_type": "billing_mismatch",
+        "resolution": "Recommended refunding the duplicate March charge and waiving the late fee.",
     },
     {
-        "id": "cust_amina",
+        "id": "cust_bob",
         "history_agent": "ChatAgent",
         "facts": {
-            "name": "Amina Nwosu",
-            "assistance_path": "rental recovery",
-            "preferred_channel": "email",
-            "document_status": "landlord notice uploaded; income proof pending",
-            "household_need": "two school-age children",
+            "name": "Bob Tan",
+            "plan": "Free",
+            "preferred_channel": "chat",
+            "known_blocker": "cannot receive SMS codes abroad",
         },
-        "issue_type": "document_follow_up",
-        "resolution": (
-            "Recommended a document checklist and a human caseworker review "
-            "before any rental-assistance eligibility decision."
-        ),
+        "issue_type": "password_reset",
+        "resolution": "Recommended an email reset link instead of SMS, with identity verification by security question.",
     },
     {
-        "id": "cust_dev",
+        "id": "cust_carol",
         "history_agent": "EmailAgent",
         "facts": {
-            "name": "Dev Shah",
-            "assistance_path": "housing recovery",
-            "preferred_channel": "phone call through caseworker",
-            "known_blocker": "limited internet access",
-            "document_status": "identity documents verified",
+            "name": "Carol Mendes",
+            "plan": "Enterprise",
+            "preferred_channel": "chat",
+            "account_note": "has a dedicated success manager",
         },
-        "issue_type": "transportation_access",
-        "resolution": (
-            "Recommended a caseworker callback to coordinate transport options "
-            "for an in-person housing-recovery appointment."
-        ),
+        "issue_type": "billing_mismatch",
+        "resolution": "Recommended a prorated credit for 4 hours of downtime in the invoice period.",
     },
     {
-        "id": "cust_elena",
+        "id": "cust_dan",
         "history_agent": "ChatAgent",
         "facts": {
-            "name": "Elena Petrov",
-            "assistance_path": "temporary housing",
+            "name": "Dan Okafor",
+            "plan": "Pro",
             "preferred_channel": "email",
-            "accessibility_need": "ground-floor placement preferred",
-            "document_status": "intake form completed",
         },
-        "issue_type": "temporary_housing",
-        "resolution": (
-            "Recommended an accessibility-aware placement review with a human "
-            "housing coordinator before confirming a referral."
-        ),
+        "issue_type": "data_export_failure",
+        "resolution": "Recommended rebuilding the export job after clearing a stale workspace lock.",
     },
 ]
 
 
 def seed_all() -> list[str]:
-    """Seed a small, synthetic case set. Re-running adds another history event."""
+    """Seed a small synthetic set. Re-running adds another history event."""
     seeded = []
     for customer in SEED_CUSTOMERS:
         session_id = start_session(customer["id"], agent_name=customer["history_agent"])
@@ -94,4 +76,4 @@ def seed_all() -> list[str]:
 
 if __name__ == "__main__":
     seeded = seed_all()
-    print(f"Seeded {len(seeded)} synthetic assistance cases: {', '.join(seeded)}")
+    print(f"Seeded {len(seeded)} synthetic customers: {', '.join(seeded)}")

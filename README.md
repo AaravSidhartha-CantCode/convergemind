@@ -8,21 +8,21 @@ Built for [Graph Hacks](https://www.wemakedevs.org/hackathons/falkordb) — **Tr
 
 ## The problem
 
-After a flood or displacement event, a household may have to repeat its safe-contact preference, document status, and accessibility needs at every handoff. The usual fix is to stuff a transcript into the next agent's context window. That fails when a new coordinator enters the case, the contact situation changes, or a recommendation depends on what several earlier interactions established.
+When an agent team takes over a conversation, it often gets a transcript summary or no context at all. That fails when a new agent needs a fact established weeks earlier, when several channels share a customer relationship, or when newly verified information makes a previous recommendation unsafe.
 
 ConvergeMind puts the memory in a graph instead of in a context window. `ChatAgent` and `EmailAgent` run as separate support invocations with separate, empty context windows. They pass each other no transcript. Everything one knows about the other's work it learned by traversing FalkorDB. A third, separate `MemoryGuardian` agent audits evidence and governs which memories can direct support actions.
 
 That alone is not enough for a real agent fleet: stale, contradictory, and malicious memories should not quietly become instructions. ConvergeMind treats remembered information as a governed **claim** with evidence, trust, status, and downstream dependencies. The Memory Guardian can quarantine an untrusted write, expose a conflict, and calculate the blast radius when newly verified evidence supersedes an old claim.
 
-## What the product does for a housing-recovery team
+## What the product does
 
-A caseworker opens one assistance case and sees the context the team can safely use: safe-contact constraints, document status, accessibility needs, the prior recovery playbook, and any memory that needs review. The workflow is deliberately simple:
+A team operating multiple agents uses ConvergeMind as a **memory control plane**. It keeps agent memory persistent, shared only where intended, and governed when it changes. The support workflow in the UI is a synthetic example, not the product boundary.
 
-1. **Continue the intake.** Intake Chat reads the private case graph before responding.
-2. **Change channels without repetition.** Case Follow-up starts separately and reads the same graph instead of receiving a transcript.
-3. **Challenge a memory before it changes a recommendation.** Memory Safety Review checks new evidence, quarantines unsafe notes, and highlights every past recommendation that needs revalidation.
+1. **Continue work without a transcript.** A fresh agent reads durable graph memory before responding.
+2. **Hand off safely.** A separate agent gets only the verified context it needs from the same tenant graph.
+3. **Treat memory as an operational dependency.** Memory Safety Review checks new evidence, quarantines unsafe notes, and highlights every past agent decision that needs revalidation.
 
-The graph is the evidence trail behind the case view. It shows why an agent can use a piece of context and what changes when that context is corrected.
+The graph is the evidence trail behind each answer. It shows why an agent can use a piece of context and what decisions change when that context is corrected.
 
 ## Remove FalkorDB and nothing works
 
@@ -132,11 +132,11 @@ uvicorn backend.api:app --reload --port 8000     # terminal 1
 streamlit run ui/streamlit_app.py                # terminal 2  -> :8501
 ```
 
-Then open <http://localhost:8501>, pick `cust_maya`, and tell `ChatAgent` *"I lost my phone in the flood. What is the safe next step for my housing case?"* It recalls Maya's no-SMS constraint, accessibility need, and prior temporary-housing playbook. The demo records recommendations in FalkorDB; it does not contact providers, send messages, or decide eligibility. Hand off to `EmailAgent` and ask what happened: it reads the graph without receiving a transcript.
+Then open <http://localhost:8501>, pick `cust_bob`, and tell `ChatAgent` *"I'm locked out of my account again. What should I do?"* It recalls Bob's no-SMS constraint, finds a prior password-reset playbook, and records the recommended next step. The demo records recommendations in FalkorDB; it does not send email or modify an account. Hand off to `EmailAgent` and ask what happened: it reads the graph without receiving a transcript.
 
-For the full memory-immunity flow, use **add verified carrier update**, then ask `MemoryGuardian` to audit the case or use the **verify** action. The previous `known_blocker` claim is superseded and every decision that depended on it is visibly flagged for revalidation.
+For the full memory-immunity flow, use **add verified carrier update**, then use the **verify** action. The previous `known_blocker` claim is superseded and every decision that depended on it is visibly flagged for revalidation.
 
-Inspect the raw graph yourself at <http://localhost:3000> (FalkorDB Browser) and run Cypher against `customer:cust_maya` directly.
+Inspect the raw graph yourself at <http://localhost:3000> (FalkorDB Browser) and run Cypher against `customer:cust_bob` directly.
 
 ## Stack
 

@@ -77,7 +77,7 @@ Generate a public domain under Settings, Networking, Generate Domain.
 
 Open the public Railway domain in a browser. The public port serves Streamlit, while the FastAPI process intentionally listens only on the container loopback interface; `/health` on the public URL is therefore not an API health check.
 
-Pick `cust_maya` and send ChatAgent *"I lost my phone in the flood. What is the safe next step for my housing case?"* A working deployment recalls Maya's no-SMS constraint, finds the `temporary_housing` playbook, and writes the resulting recommendation back to the graph. Also use **add verified carrier update**, then ask MemoryGuardian to audit the case.
+Pick `cust_bob` and send ChatAgent *"I'm locked out of my account again. What should I do?"* A working deployment recalls Bob's no-SMS constraint, finds the `password_reset` playbook, and writes the resulting recommendation back to the graph. Also use **add verified carrier update**, then use the **verify** action to reveal stale decisions.
 
 ## Put the URL in the README
 

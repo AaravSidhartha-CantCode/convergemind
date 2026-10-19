@@ -49,35 +49,32 @@ def _get_client() -> Groq:
 
 
 _SHARED_RULES = """
-You are a case coordinator for a housing-recovery assistance team, working
-inside a system where your memory is a shared graph database rather than your
-own context.
+You are a customer support agent for a SaaS product, working inside a system
+where your memory is a shared graph database rather than your own context.
 
 Non-negotiable procedure:
 1. Call recall_customer_context FIRST, before you say anything at all. You
    start every conversation with no memory, so this is the only way you know
    who you are talking to.
-2. Never ask the client for something recall_customer_context already told
+2. Never ask the customer for something recall_customer_context already told
    you. Reference it instead, naturally, so they can tell you remembered.
-3. If the client's case resembles a known case type, call
-   find_similar_resolutions to see how the team handled it before.
-4. When you learn a durable coordination fact (a safe contact preference,
-   document status, or accessibility need), call record_fact.
+3. If the customer's problem resembles a known issue type, call
+   find_similar_resolutions to see how it was fixed before, for anyone.
+4. When you learn a durable fact about the customer (their plan, a
+   preference, an account detail), call record_fact.
 5. When you resolve something, call log_resolution so every other agent
    inherits the fix.
 6. You can recommend a next step and record that recommendation, but you
-   cannot contact a shelter, send a message, make an eligibility decision, or
+   cannot send email, reset an account, change a subscription, or
    perform any other external action. Never claim that you completed one.
-7. Do not give medical, legal, or emergency-safety instructions. When a case
-   needs urgent or specialist support, recommend a human caseworker follow-up.
-
-Be concise. Do not narrate your tool use to the client.
+Be concise. Do not narrate your tool use to the customer.
 """.strip()
 
 _GUARDIAN_RULES = """
-You are MemoryGuardian, a governance agent for a housing-recovery case graph.
-You do not provide assistance or invent client facts. Your job is to inspect
-evidence and keep unsafe or stale memories from directing the coordinators.
+You are MemoryGuardian, a governance agent for a customer-memory graph.
+You do not provide customer support or invent customer facts. Your job is to
+inspect evidence and keep unsafe or stale memories from directing the support
+agents.
 
 Non-negotiable procedure:
 1. Call inspect_memory_health FIRST. It lists claims, their evidence and
@@ -85,7 +82,7 @@ Non-negotiable procedure:
 2. Verify a proposed claim only when its evidence and source trust support
    it. Explain the evidence you relied on and report the returned blast radius.
 3. Quarantine a claim when its source is untrusted, its evidence is missing,
-   or it could cause unsafe caseworker action. Give a concise reason.
+   or it could cause unsafe customer action. Give a concise reason.
 4. If two claims conflict, record an explicit CONTRADICTS or SUPERSEDES
    relationship instead of silently choosing one.
 5. Never call support-agent tools and never say a claim is true unless it has
@@ -109,9 +106,9 @@ TOOL_SCHEMAS = [
         "function": {
             "name": "recall_customer_context",
             "description": (
-                "Retrieve everything known about the client you are currently "
-                "supporting: every past session and which agent handled it, every "
-                "known coordination fact, and every past case. Call this first, "
+                "Retrieve everything known about the customer you are currently "
+                "serving: every past session and which agent handled it, every "
+                "known fact about them, and every past issue. Call this first, "
                 "always. Takes no arguments."
             ),
             "parameters": {"type": "object", "properties": {}, "required": []},
@@ -122,15 +119,15 @@ TOOL_SCHEMAS = [
         "function": {
             "name": "record_fact",
             "description": (
-                "Store a durable fact about the current client so every future "
-                "coordinator, on any channel, inherits it."
+                "Store a durable fact about the current customer so every future "
+                "agent, on any channel, inherits it."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "key": {
                         "type": "string",
-                        "description": "Short snake_case fact name, e.g. safe_contact, document_status, accessibility_need",
+                        "description": "Short snake_case fact name, e.g. plan, preferred_channel, timezone",
                     },
                     "value": {"type": "string", "description": "The fact's value"},
                 },
@@ -143,16 +140,16 @@ TOOL_SCHEMAS = [
         "function": {
             "name": "log_resolution",
             "description": (
-                "Record the recommended next step for a case. Writes the case to "
-                "this client's history and the reusable playbook to the shared "
-                "knowledge graph that every coordinator reads."
+                "Record the recommended resolution for an issue. Writes the issue to "
+                "this customer's history and the reusable fix to the shared "
+                "knowledge graph that every other agent reads."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "issue_type": {
                         "type": "string",
-                        "description": "Short snake_case category, e.g. temporary_housing, document_follow_up",
+                        "description": "Short snake_case category, e.g. billing_mismatch, password_reset",
                     },
                     "resolution_text": {
                         "type": "string",
@@ -168,16 +165,16 @@ TOOL_SCHEMAS = [
         "function": {
             "name": "find_similar_resolutions",
             "description": (
-                "Look up how this type of case has been handled before, for any "
-                "client. This is shared procedural knowledge across the whole "
-                "assistance team."
+                "Look up how this type of issue has been resolved before, for "
+                "ANY customer, not just this one. This is shared procedural "
+                "knowledge across the whole support team."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "issue_type": {
                         "type": "string",
-                        "description": "The case category to search for",
+                        "description": "The issue category to search for",
                     }
                 },
                 "required": ["issue_type"],
@@ -189,8 +186,8 @@ TOOL_SCHEMAS = [
         "function": {
             "name": "known_issue_types",
             "description": (
-                "List every case type the shared knowledge graph has seen, to help "
-                "you pick an existing category instead of inventing one."
+                "List every issue type the shared knowledge graph has seen, to "
+                "help you pick an existing category instead of inventing one."
             ),
             "parameters": {"type": "object", "properties": {}, "required": []},
         },
